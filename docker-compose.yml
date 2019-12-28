@@ -1,0 +1,103 @@
+version: '3'
+
+services:
+### database ###
+  redis:
+    image: sameersbn/redis:4.0.9-3
+    expose:
+      - 6379
+    ports:
+      - 6379:6379
+    networks:
+      - default
+  mysql:
+    image: mysql:5
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+    expose:
+      - 3306
+    ports:
+      - 3306:3306
+    networks:
+      - default
+  oracle:
+    image: oracleinanutshell/oracle-xe-11g:latest
+    expose:
+      - 1521
+    ports:
+      - 1521:1521
+    networks:
+      - default
+ 
+### docker registry ###
+  registry.local:
+    image:  registry:2
+    volumes:
+      - /Users/yfr/local_registry:/var/lib/registry
+    ports:
+      - 5000:5000
+    expose:
+      - 5000
+    networks:
+      - default
+  registry.ui:
+    image: hyper/docker-registry-web:v0.1.2
+    environment:
+      REGISTRY_URL: http://registry.local:5000/v2
+    ports:
+      - 5001:8080
+
+### jaeger ###
+  jaeger-collector:
+    image: jaegertracing/jaeger-collector:1.16.0
+    command: ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra", "--collector.zipkin.http-port=9411"]
+    ports:
+      - "14269"
+      - "14268:14268"
+      - "14267"
+      - "14250"
+      - "9411:9411"
+    restart: on-failure
+    depends_on:
+      - cassandra-schema
+
+  jaeger-query:
+    image: jaegertracing/jaeger-query:1.16.0
+    command: ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra"]
+    ports:
+      - "16686:16686"
+      - "16687"
+    restart: on-failure
+    depends_on:
+      - cassandra-schema
+
+  jaeger-agent:
+    image: jaegertracing/jaeger-agent:1.16.0
+    command: ["--reporter.grpc.host-port=jaeger-collector:14250"]
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+    restart: on-failure
+    depends_on:
+      - jaeger-collector
+
+  cassandra:
+    image: cassandra:3.9
+
+  cassandra-schema:
+    image: jaegertracing/jaeger-cassandra-schema:1.16.0
+    depends_on:
+      - cassandra
+
+### other ###
+  gitlab:
+    image: gitlab/gitlab-ce:12.6.1-ce.0
+    ports:
+      - 10443:443
+      - 10080:80
+
+networks:
+  default:
+
