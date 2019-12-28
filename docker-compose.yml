@@ -3,7 +3,7 @@ version: '3'
 services:
 ### database ###
   redis:
-    image: sameersbn/redis:4.0.9-3
+    image: redis:${redis_version}
     expose:
       - 6379
     ports:
@@ -11,7 +11,7 @@ services:
     networks:
       - default
   mysql:
-    image: mysql:5
+    image: mysql:${mysql_version}
     environment:
       MYSQL_ROOT_PASSWORD: 123456
     expose:
@@ -49,7 +49,7 @@ services:
 
 ### jaeger ###
   jaeger-collector:
-    image: jaegertracing/jaeger-collector:1.16.0
+    image: jaegertracing/jaeger-collector:${jaeger_version}
     command: ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra", "--collector.zipkin.http-port=9411"]
     ports:
       - "14269"
@@ -62,17 +62,17 @@ services:
       - cassandra-schema
 
   jaeger-query:
-    image: jaegertracing/jaeger-query:1.16.0
+    image: jaegertracing/jaeger-query:${jaeger_version}
     command: ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra"]
     ports:
       - "16686:16686"
       - "16687"
     restart: on-failure
     depends_on:
-      - cassandra-schema
+      - jaeger-agent
 
   jaeger-agent:
-    image: jaegertracing/jaeger-agent:1.16.0
+    image: jaegertracing/jaeger-agent:${jaeger_version}
     command: ["--reporter.grpc.host-port=jaeger-collector:14250"]
     ports:
       - "5775:5775/udp"
@@ -84,16 +84,16 @@ services:
       - jaeger-collector
 
   cassandra:
-    image: cassandra:3.9
+    image: cassandra:${jaeger_cassandra_version}
 
   cassandra-schema:
-    image: jaegertracing/jaeger-cassandra-schema:1.16.0
+    image: jaegertracing/jaeger-cassandra-schema:${jaeger_version}
     depends_on:
       - cassandra
 
 ### other ###
   gitlab:
-    image: gitlab/gitlab-ce:12.6.1-ce.0
+    image: gitlab/gitlab-ce:${gitlab_version}
     ports:
       - 10443:443
       - 10080:80
