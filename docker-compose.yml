@@ -21,7 +21,7 @@ services:
     networks:
       - default
   oracle:
-    image: oracleinanutshell/oracle-xe-11g:latest
+    image: oracleinanutshell/oracle-xe-11g:${oracle_xe_version}
     expose:
       - 1521
     ports:
@@ -31,7 +31,7 @@ services:
  
 ### docker registry ###
   registry.local:
-    image:  registry:2
+    image:  registry:${registry_version}
     volumes:
       - /Users/yfr/local_registry:/var/lib/registry
     ports:
@@ -41,11 +41,13 @@ services:
     networks:
       - default
   registry.ui:
-    image: hyper/docker-registry-web:v0.1.2
+    image: hyper/docker-registry-web:${registry_ui_version}
     environment:
       REGISTRY_URL: http://registry.local:5000/v2
     ports:
       - 5001:8080
+    networks:
+      - default
 
 ### jaeger ###
   jaeger-collector:
