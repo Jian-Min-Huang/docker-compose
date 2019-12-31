@@ -1,6 +1,17 @@
 version: '3'
 
 services:
+### queue ###
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    environment:
+      RABBITMQ_DEFAULT_USER: "rabbitmq"
+      RABBITMQ_DEFAULT_PASS: "rabbitmq"
+    ports:
+      - 15672:15672
+      - 5672:5672
+    networks:
+      - default
 ### database ###
   redis:
     image: redis:${redis_version}
