@@ -3,32 +3,33 @@ version: '3'
 services:
 ### queue ###
   rabbitmq:
-    image: "rabbitmq:3-management"
+    image: rabbitmq:${rabbitmq_version}
     environment:
       RABBITMQ_DEFAULT_USER: "rabbitmq"
       RABBITMQ_DEFAULT_PASS: "rabbitmq"
     ports:
-      - 15672:15672
-      - 5672:5672
+      - "15672:15672"
+      - "5672:5672"
     networks:
       - default
+
 ### database ###
   redis:
     image: redis:${redis_version}
     expose:
       - 6379
     ports:
-      - 6379:6379
+      - "6379:6379"
     networks:
       - default
   mysql:
     image: mysql:${mysql_version}
     environment:
-      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_ROOT_PASSWORD: "123456"
     expose:
       - 3306
     ports:
-      - 3306:3306
+      - "3306:3306"
     networks:
       - default
   oracle:
@@ -36,29 +37,42 @@ services:
     expose:
       - 1521
     ports:
-      - 1521:1521
+      - "1521:1521"
     networks:
       - default
  
 ### docker registry ###
-  registry.local:
-    image:  registry:${registry_version}
-    volumes:
-      - /Users/yfr/local_registry:/var/lib/registry
+  docker-registry-local:
+    image:  registry:${docker_registry_version}
     ports:
-      - 5000:5000
+      - "5000:5000"
     expose:
       - 5000
     networks:
       - default
-  registry.ui:
-    image: hyper/docker-registry-web:${registry_ui_version}
+  docker-registry-ui:
+    image: hyper/docker-registry-web:${docker_registry_ui_version}
     environment:
-      REGISTRY_URL: http://registry.local:5000/v2
+      REGISTRY_URL: "http://docker-registry-local:5000/v2"
     ports:
-      - 5001:8080
+      - "5001:8080"
     networks:
       - default
+
+### ELFK Stack ###
+  elastic-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${elastic_elasticsearch_version}
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xms256m -Xmx256m"
+      ELASTIC_PASSWORD: "123456"
+      discovery.type: "single-node"
+    networks:
+      - default
+
+### Prometheus Stack ###
 
 ### jaeger ###
   jaeger-collector:
@@ -72,7 +86,7 @@ services:
       - "9411:9411"
     restart: on-failure
     depends_on:
-      - cassandra-schema
+      - jaeger-cassandra-schema
 
   jaeger-query:
     image: jaegertracing/jaeger-query:${jaeger_version}
@@ -96,20 +110,20 @@ services:
     depends_on:
       - jaeger-collector
 
-  cassandra:
+  jaeger-cassandra:
     image: cassandra:${jaeger_cassandra_version}
 
-  cassandra-schema:
+  jaeger-cassandra-schema:
     image: jaegertracing/jaeger-cassandra-schema:${jaeger_version}
     depends_on:
-      - cassandra
+      - jaeger-cassandra
 
 ### other ###
   gitlab:
     image: gitlab/gitlab-ce:${gitlab_version}
     ports:
-      - 10443:443
-      - 10080:80
+      - "10443:443"
+      - "10080:80"
 
 networks:
   default:
