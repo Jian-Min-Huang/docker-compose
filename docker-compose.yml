@@ -22,7 +22,7 @@ services:
       - "6379:6379"
     networks:
       - default
-  mysql:
+  mysql: # root/123456
     image: mysql:${mysql_version}
     environment:
       MYSQL_ROOT_PASSWORD: "123456"
@@ -32,7 +32,7 @@ services:
       - "3306:3306"
     networks:
       - default
-  oracle:
+  oracle: # xe/system/oracle
     image: oracleinanutshell/oracle-xe-11g:${oracle_xe_version}
     expose:
       - 1521
@@ -40,7 +40,15 @@ services:
       - "1521:1521"
     networks:
       - default
- 
+  cassandra: # cassandra/cassandra
+    image: cassandra:${cassandra_version}
+    expose:
+      - 9042
+    ports:
+      - "9042:9042"
+    networks:
+      - default
+
 ### docker registry ###
   docker-registry-local:
     image:  registry:${docker_registry_version}
@@ -85,6 +93,8 @@ services:
       - "14250"
       - "9411:9411"
     restart: on-failure
+    networks:
+      - default
     depends_on:
       - jaeger-cassandra-schema
 
@@ -95,6 +105,8 @@ services:
       - "16686:16686"
       - "16687"
     restart: on-failure
+    networks:
+      - default
     depends_on:
       - jaeger-agent
 
@@ -107,14 +119,15 @@ services:
       - "6832:6832/udp"
       - "5778:5778"
     restart: on-failure
+    networks:
+      - default
     depends_on:
       - jaeger-collector
 
-  cassandra:
-    image: cassandra:${jaeger_cassandra_version}
-
   jaeger-cassandra-schema:
     image: jaegertracing/jaeger-cassandra-schema:${jaeger_version}
+    networks:
+      - default
     depends_on:
       - cassandra
 
