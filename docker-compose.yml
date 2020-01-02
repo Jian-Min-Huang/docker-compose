@@ -110,13 +110,13 @@ services:
     depends_on:
       - jaeger-collector
 
-  jaeger-cassandra:
+  cassandra:
     image: cassandra:${jaeger_cassandra_version}
 
   jaeger-cassandra-schema:
     image: jaegertracing/jaeger-cassandra-schema:${jaeger_version}
     depends_on:
-      - jaeger-cassandra
+      - cassandra
 
 ### other ###
   gitlab:
