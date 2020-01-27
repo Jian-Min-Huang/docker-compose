@@ -53,7 +53,7 @@ services:
   docker-registry-local:
     image:  registry:${docker_registry_version}
     ports:
-      - "5000:5000"
+      - "5001:5000"
     expose:
       - 5000
     networks:
@@ -63,24 +63,48 @@ services:
     environment:
       REGISTRY_URL: "http://docker-registry-local:5000/v2"
     ports:
-      - "5001:8080"
+      - "5002:8080"
     networks:
       - default
 
-### ELFK Stack ###
+### Elastic Stack ###
+  elastic-kibana:
+    image: docker.elastic.co/kibana/kibana:${elastic_kibana_version}
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: "http://elastic-elasticsearch:9200"
+    networks:
+      - default
+    depends_on:
+      - elastic-elasticsearch
   elastic-elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:${elastic_elasticsearch_version}
     ports:
       - "9200:9200"
       - "9300:9300"
     environment:
-      ES_JAVA_OPTS: "-Xms256m -Xmx256m"
-      ELASTIC_PASSWORD: "123456"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      #ELASTIC_PASSWORD: "123456"
       discovery.type: "single-node"
     networks:
       - default
+  elastic-logstash:
+    image: docker.elastic.co/logstash/logstash:${elastic_logstash_version}
+    ports:
+      - "5000:5000"
+      - "12201:12201/udp"
+    environment:
+      LS_JAVA_OPTS: "-Xmx512m -Xms512m"
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    networks:
+      - default
+    depends_on:
+      - elastic-kibana
 
-### Prometheus Stack ###
+### Prometheus Monitoring Stack ###
 
 ### jaeger ###
   jaeger-collector:
