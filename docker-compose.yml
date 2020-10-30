@@ -1,19 +1,7 @@
 version: '3'
 
 services:
-### queue ###
-  rabbitmq:
-    image: rabbitmq:${rabbitmq_version}
-    environment:
-      RABBITMQ_DEFAULT_USER: "rabbitmq"
-      RABBITMQ_DEFAULT_PASS: "rabbitmq"
-    ports:
-      - "15672:15672"
-      - "5672:5672"
-    networks:
-      - default
-
-### database ###
+### cache ###
   redis:
     image: redis:${redis_version}
     expose:
@@ -22,10 +10,24 @@ services:
       - "6379:6379"
     networks:
       - default
-  mysql: # root/123456
+
+### queue ###
+  rabbitmq:
+    image: rabbitmq:${rabbitmq_version}
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbitmq
+      - RABBITMQ_DEFAULT_PASS=rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks:
+      - default
+
+### database ###
+  mysql: # root/rootroot
     image: mysql:${mysql_version}
     environment:
-      MYSQL_ROOT_PASSWORD: "123456"
+      - MYSQL_ROOT_PASSWORD=rootroot
     expose:
       - 3306
     ports:
@@ -40,128 +42,6 @@ services:
       - "1521:1521"
     networks:
       - default
-  cassandra: # cassandra/cassandra
-    image: cassandra:${cassandra_version}
-    expose:
-      - 9042
-    ports:
-      - "9042:9042"
-    networks:
-      - default
-
-### docker registry ###
-  docker-registry-local:
-    image:  registry:${docker_registry_version}
-    ports:
-      - "5001:5000"
-    expose:
-      - 5000
-    networks:
-      - default
-  docker-registry-ui:
-    image: hyper/docker-registry-web:${docker_registry_ui_version}
-    environment:
-      REGISTRY_URL: "http://docker-registry-local:5000/v2"
-    ports:
-      - "5002:8080"
-    networks:
-      - default
-
-### Elastic Stack ###
-  elastic-kibana:
-    image: docker.elastic.co/kibana/kibana:${elastic_kibana_version}
-    ports:
-      - "5601:5601"
-    environment:
-      ELASTICSEARCH_HOSTS: "http://elastic-elasticsearch:9200"
-    networks:
-      - default
-    depends_on:
-      - elastic-elasticsearch
-  elastic-elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:${elastic_elasticsearch_version}
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    environment:
-      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
-      #ELASTIC_PASSWORD: "123456"
-      discovery.type: "single-node"
-    networks:
-      - default
-  elastic-logstash:
-    image: docker.elastic.co/logstash/logstash:${elastic_logstash_version}
-    ports:
-      - "5000:5000"
-      - "12201:12201/udp"
-    environment:
-      LS_JAVA_OPTS: "-Xmx512m -Xms512m"
-    volumes:
-      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
-      - ./logstash/pipeline:/usr/share/logstash/pipeline
-    networks:
-      - default
-    depends_on:
-      - elastic-kibana
-
-### Prometheus Monitoring Stack ###
-
-### jaeger ###
-  jaeger-collector:
-    image: jaegertracing/jaeger-collector:${jaeger_version}
-    command: ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra", "--collector.zipkin.http-port=9411"]
-    ports:
-      - "14269"
-      - "14268:14268"
-      - "14267"
-      - "14250"
-      - "9411:9411"
-    restart: on-failure
-    networks:
-      - default
-    depends_on:
-      - jaeger-cassandra-schema
-
-  jaeger-query:
-    image: jaegertracing/jaeger-query:${jaeger_version}
-    command: ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra"]
-    ports:
-      - "16686:16686"
-      - "16687"
-    restart: on-failure
-    networks:
-      - default
-    depends_on:
-      - jaeger-agent
-
-  jaeger-agent:
-    image: jaegertracing/jaeger-agent:${jaeger_version}
-    command: ["--reporter.grpc.host-port=jaeger-collector:14250"]
-    ports:
-      - "5775:5775/udp"
-      - "6831:6831/udp"
-      - "6832:6832/udp"
-      - "5778:5778"
-    restart: on-failure
-    networks:
-      - default
-    depends_on:
-      - jaeger-collector
-
-  jaeger-cassandra-schema:
-    image: jaegertracing/jaeger-cassandra-schema:${jaeger_version}
-    networks:
-      - default
-    depends_on:
-      - cassandra
-
-### other ###
-  gitlab:
-    image: gitlab/gitlab-ce:${gitlab_version}
-    ports:
-      - "10443:443"
-      - "10080:80"
 
 networks:
   default:
-
