@@ -43,5 +43,38 @@ services:
     networks:
       - default
 
+### Elastic Stack ###
+  elastic-kibana:
+    image: docker.elastic.co/kibana/kibana:${elastic_kibana_version}
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS="http://elastic-elasticsearch:9200"
+    networks:
+      - default
+    depends_on:
+      - elastic-elasticsearch
+  elastic-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${elastic_elasticsearch_version}
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+    networks:
+      - default
+  elastic-logstash:
+    image: docker.elastic.co/logstash/logstash:${elastic_logstash_version}
+    ports:
+      - "5000:5000"
+      - "12201:12201/udp"
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    networks:
+      - default
+    depends_on:
+      - elastic-kibana
+
 networks:
   default:
