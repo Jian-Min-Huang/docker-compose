@@ -43,7 +43,7 @@ services:
     networks:
       - default
   mongo:
-    image: mongo
+    image: mongo:${mongodb_version}
     restart: always
     expose:
       - 27017
