@@ -42,6 +42,32 @@ services:
       - "1521:1521"
     networks:
       - default
+  mongo:
+    image: mongo
+    restart: always
+    expose:
+      - 27017
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_DATABASE: test
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootroot
+    networks:
+      - default
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: rootroot
+    depends_on:
+      - mongo
+    networks:
+      - default
 
 ### Elastic Stack ###
   elastic-kibana:
